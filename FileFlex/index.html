@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FileFlex Optimizer</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="theme-light">
+  <header class="topbar">
+    <div class="brand">
+      <img class="brand-logo" src="/icons/logo.jpg" alt="FileFlex Optimizer logo" width="44" height="44" />
+      <div>
+        <div class="brand-title">FileFlex Optimizer</div>
+        <div class="brand-tagline">Compress, enhance, and convert files in one place.</div>
+      </div>
+    </div>
+    <div class="topbar-actions">
+      <button class="ghost" id="themeToggle" aria-label="Toggle theme">
+        <span class="icon" aria-hidden="true">🌗</span>
+        <span class="btn-label">Theme</span>
+      </button>
+      <a class="ghost" href="#help" aria-label="Jump to help">?
+      </a>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="panel">
+      <div class="card upload-card">
+        <div class="upload-header">
+          <div>
+            <h1>Upload files</h1>
+            <p>Drop files here or browse. Supported: PNG, JPG, WEBP, PDF, DOCX, PPTX, audio, video.</p>
+          </div>
+          <label class="button primary" for="fileInput">Browse files</label>
+          <input id="fileInput" type="file" multiple aria-label="Choose files" />
+        </div>
+        <div id="dropZone" class="dropzone" tabindex="0" aria-label="Drag and drop files here">
+          <div class="drop-inner">
+            <div class="drop-icon" aria-hidden="true">⬆</div>
+            <div class="drop-text">Drag & drop or paste files</div>
+            <div class="drop-sub">Up to 2GB per file. We process in-browser; nothing leaves your device.</div>
+          </div>
+        </div>
+        <div id="fileList" class="file-list" aria-live="polite"></div>
+      </div>
+
+      <div class="card controls">
+        <div class="control-row">
+          <div>
+            <div class="label">Optimization mode</div>
+            <div class="sub">Choose whether to shrink or boost quality (images only support both; other types use smart gzip when shrinking).</div>
+          </div>
+          <div class="segmented" role="group" aria-label="Optimization mode">
+            <button id="modeShrink" class="segmented-btn active" aria-pressed="true">Make smaller</button>
+            <button id="modeBoost" class="segmented-btn" aria-pressed="false">Boost quality</button>
+          </div>
+        </div>
+        <div class="control-row">
+          <div>
+            <div class="label">Target size</div>
+            <div class="sub">Set a target output size. We aim to stay near it while keeping fidelity.</div>
+          </div>
+          <div class="size-inputs">
+            <input type="range" id="sizeSlider" min="50" max="5120" value="500" step="10" aria-label="Target size in KB" />
+            <div class="size-fields">
+              <input type="number" id="sizeNumber" min="50" max="5120" value="500" aria-label="Target size numeric" />
+              <span class="unit">KB</span>
+            </div>
+          </div>
+        </div>
+        <div class="control-row actions">
+          <div class="action-buttons">
+            <button id="processBtn" class="button primary">Process files</button>
+            <button id="resetBtn" class="ghost">Reset</button>
+          </div>
+          <div class="download-group">
+            <button id="downloadBtn" class="button" disabled>Download processed</button>
+          </div>
+        </div>
+        <div class="progress" aria-live="polite">
+          <div id="progressBar" class="progress-bar"></div>
+          <div id="progressText" class="progress-text">Waiting to start</div>
+        </div>
+      </div>
+
+      <div class="card stats" id="statsCard" hidden>
+        <div class="stat">
+          <div class="stat-label">Original total</div>
+          <div class="stat-value" id="originalTotal">0 KB</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Processed total</div>
+          <div class="stat-value" id="processedTotal">0 KB</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Change</div>
+          <div class="stat-value" id="changeValue">0%</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel preview-panel">
+      <div class="card preview-card">
+        <div class="preview-header">
+          <div>
+            <h2>Preview</h2>
+            <p>See how your file looks before and after.</p>
+          </div>
+          <div class="badge" id="fileBadge">No file</div>
+        </div>
+        <div class="preview-grid">
+          <div class="preview-tile">
+            <div class="tile-header">Original</div>
+            <div id="originalPreview" class="preview-box">
+              <div class="placeholder">No file yet</div>
+            </div>
+            <div class="meta" id="originalMeta">—</div>
+          </div>
+          <div class="preview-tile">
+            <div class="tile-header">Processed</div>
+            <div id="processedPreview" class="preview-box">
+              <div class="placeholder">Process to view</div>
+            </div>
+            <div class="meta" id="processedMeta">—</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card help" id="help">
+        <h3>How it works</h3>
+        <ol>
+          <li>Select or drop files. Images are optimized via canvas. Other files use browser gzip for size-down; original type is retained when boosting.</li>
+          <li>Choose your target size in KB and mode.</li>
+          <li>Click Process to optimize. Download the processed bundle or individual files from the list.</li>
+        </ol>
+        <p class="note">Processing happens locally in your browser. For heavy audio/video transcoding, a server-side encoder is recommended.</p>
+      </div>
+    </section>
+  </main>
+
+  <template id="fileRowTemplate">
+    <div class="file-row">
+      <div class="file-thumb" data-type></div>
+      <div class="file-info">
+        <div class="file-name" data-name></div>
+        <div class="file-meta" data-meta></div>
+      </div>
+      <div class="file-actions">
+        <span class="file-status" data-status>Waiting</span>
+        <button class="ghost mini danger" data-cancel aria-label="Remove file">✖</button>
+        <button class="ghost mini" data-download disabled aria-label="Download file">⬇</button>
+      </div>
+    </div>
+  </template>
+
+  <script src="script.js"></script>
+</body>
+</html>
